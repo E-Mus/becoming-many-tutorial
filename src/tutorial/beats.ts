@@ -1,4 +1,5 @@
 import type { GuidanceTask } from '../guidance/GuidanceMode';
+import type { VoiceCue } from './VoicePlayer';
 
 /**
  * DIE PARTITUR.
@@ -21,6 +22,10 @@ export interface Beat {
    * hatte. Ein Zeichen, das von selbst umspringt, ist keine Anweisung mehr.
    */
   minDuration: number;
+  /** Sprachdatei, die beim Eintritt in diesen Beat beginnt. */
+  voice?: VoiceCue;
+  /** Der naechste Beat beginnt erst, wenn die Sprachdatei zu Ende ist. */
+  waitForVoice?: boolean;
   /** Freitext fuer die Dev-Anzeige. */
   note?: string;
 }
@@ -52,15 +57,17 @@ export const BEATS: Beat[] = [
   { id: 'ankommen', task: null, minDuration: 6,
     note: 'Das Feld blendet auf. Stillstand. Nichts passiert - und das ist Inhalt.' },
 
-  { id: 'bemerken', task: null, minDuration: 9,
-    note: 'Die Vorwaertsdrift setzt ein. Die Bugwelle verraet den eigenen Koerper.' },
+  { id: 'bemerken', task: null, minDuration: 0,
+    voice: 'anfangundrechts', waitForVoice: true,
+    note: 'Die Vorwaertsdrift und die Einleitung beginnen. Ihr Ende ruft den ersten Pfeil.' },
 
   { id: 'rechts', task: t('x', 1, 7), minDuration: 0 },
-  { id: 'links', task: t('x', -1, 7), minDuration: 0 },
+  { id: 'links', task: t('x', -1, 7), minDuration: 0, voice: 'links' },
 
-  { id: 'hoch', task: t('y', 1, 5), minDuration: 0 },
-  { id: 'runter', task: t('y', -1, 5), minDuration: 0 },
+  { id: 'hoch', task: t('y', 1, 5), minDuration: 0, voice: 'oben' },
+  { id: 'runter', task: t('y', -1, 5), minDuration: 0, voice: 'unten' },
 
-  { id: 'entlassen', task: null, minDuration: 12,
-    note: 'Das Feld duennt aus, das Tempo steigt. Uebergang ins Stueck.' },
+  { id: 'entlassen', task: null, minDuration: 0,
+    voice: 'ende', waitForVoice: true,
+    note: 'Das Finale laeuft vollstaendig, waehrend Feld und Tempo ins Stueck uebergehen.' },
 ];

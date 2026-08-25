@@ -6,6 +6,7 @@ import type { GuidanceContext, GuidanceMode, ModeId } from '../guidance/Guidance
 import { GUIDANCE_MODES } from '../guidance/registry';
 import { BEATS, type Beat } from './beats';
 import { intensityFor } from './escalation';
+import { VoicePlayer } from './VoicePlayer';
 
 /** Zustand, den eine Atempause am Ende erreicht haben soll. */
 interface InterludeTarget {
@@ -42,6 +43,7 @@ export class Director {
   private stalled = 0;
   private mode: GuidanceMode;
   private modeId: ModeId;
+  private readonly voice = new VoicePlayer();
   finished = false;
 
   constructor(
@@ -59,6 +61,8 @@ export class Director {
   }
   get currentModeId() { return this.modeId; }
   get intensity() { return intensityFor(this.stalled); }
+  get currentVoiceCue() { return this.voice.currentCue; }
+  get voiceWaitingForGesture() { return this.voice.isWaitingForGesture; }
   /** Laeuft gerade eine Aufgabe, oder ist Atempause? Fuer die Dev-Anzeige. */
   get hasTask() { return this.currentBeat?.task != null; }
 
@@ -117,6 +121,7 @@ export class Director {
 
     const beat = this.currentBeat;
     if (!beat) {
+      this.voice.stop();
       this.finished = true;
       return;
     }
@@ -124,7 +129,19 @@ export class Director {
       beat.task.intensity = 0;
       this.mode.begin(beat.task, this.ctx(0));
     }
+    if (beat.voice) {
+      this.voice.play(
+        beat.voice,
+        beat.waitForVoice ? () => this.advanceAfterVoice(beat) : undefined,
+      );
+    } else {
+      this.voice.stop();
+    }
     this.onBeat?.(beat);
+  }
+
+  private advanceAfterVoice(beat: Beat) {
+    if (!this.finished && this.currentBeat === beat) this.advance(true);
   }
 
   /** Haken fuer die Dev-Anzeige. */
@@ -139,6 +156,7 @@ export class Director {
     // Atempausen: Feld und Tempo fahren, keine Aufgabe.
     if (!beat.task) {
       this.driveInterlude(beat, dt);
+      if (beat.voice && beat.waitForVoice) return;
       if (this.beatTime >= beat.minDuration) this.advance(true);
       return;
     }

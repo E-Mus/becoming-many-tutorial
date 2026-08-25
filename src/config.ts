@@ -1,5 +1,5 @@
 /**
- * Weiß1 — alle Regelwerte an einem Ort.
+ * Becoming Many Tutorial — alle Regelwerte an einem Ort.
  *
  * Diese Datei und `tutorial/beats.ts` tragen die kuenstlerische Absicht.
  * Hier wird gestimmt, nicht in der Engine.
@@ -191,9 +191,9 @@ export const CONFIG = {
     silence: 3,
   },
   /**
-   * Die vier Pfeil-Varianten.
+   * Die beiden Pfeil-Varianten.
    *
-   * spawnWeite liegt bei allen JENSEITS der Sichtweite (~53 m bei 130 m
+   * spawnWeite liegt bei beiden JENSEITS der Sichtweite (~53 m bei 130 m
    * Boxtiefe). Dadurch sieht man nie, wie etwas entsteht - nur, wie es aus der
    * Ferne einblendet. Das war der eigentliche Fehler aller frueheren Anlaeufe.
    */
@@ -236,10 +236,6 @@ export const CONFIG = {
     /** Der Begleiter baut sich IN SICHT auf - seine Werbeweite bleibt kleiner,
      *  sonst sieht man Partikel aus der Ferne herbeischiessen. */
     begleiter: { laenge: 11, slots: 9_000, abstand: 22, werbeWeite: 33, werbeDichte: 0.4 },
-    /** Die Schwelle ist ein VORHANG - sie lebt von Dichte und darf ihren Hof
-     *  weiterhin kraeftig ausduennen, sonst ist das Loch kein Loch. */
-    schwelle: { laenge: 9, breite: 19, hoehe: 13.5, slots: 8_000, spawnWeite: 34, werbeWeite: 28, werbeDichte: 0.6 },
-    zeichner: { laenge: 18, slots: 0, spawnWeite: 46, einfang: 24, zeichendauer: 0.6 },
   },
 } as const;
 

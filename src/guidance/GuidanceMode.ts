@@ -11,11 +11,7 @@ import type { FlightState } from '../flight/Flight';
  * gibt und in einem wortlosen Tutorial keine davon eindeutig ist.
  */
 export type Axis = 'x' | 'y';
-export type ModeId =
-  // die vier Pfeil-Varianten
-  | 'far' | 'escort' | 'threshold' | 'drawn'
-  // geparkt, ueber Tasten 5-8 erreichbar
-  | 'arrow' | 'gate' | 'flow' | 'curtain';
+export type ModeId = 'far' | 'escort';
 
 export interface GuidanceTask {
   axis: Axis;
@@ -24,11 +20,8 @@ export interface GuidanceTask {
   /** Meter seitlicher/vertikaler Versatz bis progress = 1 */
   amount: number;
   /**
-   * Nur noch vom Sog benutzt: wo die Stroemung einsetzt.
-   *
-   * Die drei Formen-Modi platzieren sich nicht mehr hierueber, sondern als
-   * Kette auf einem Weltraster (formations/chain.ts) - eine einzelne Form waere
-   * bei konstanter Vorwaertsfahrt nach gut zwei Sekunden durchflogen.
+   * Legacy-Wert aus frueheren Modi. Die aktiven Varianten platzieren ihre
+   * Formen entlang der aktuellen Flugachse.
    */
   distanceAhead: number;
   /** 0 = Fluestern, 1 = unuebersehbar. Kommt aus der Eskalationskurve. */
@@ -50,11 +43,9 @@ export interface GuidanceReport {
 }
 
 /**
- * Alle vier Sprachen fuer dieselbe Anweisung.
+ * Die beiden Sprachen fuer dieselbe Anweisung.
  *
- * begin() setzt in jedem Modus eine FESTE WELTPOSITION auf der Schiene, nie
- * eine Position relativ zur Kamera (Grundgesetz 6). Fliegt man an der Form
- * vorbei, zieht sie hinter einem weg wie ein Baum am Strassenrand.
+ * begin() setzt die Form in der Welt, nie als Screen-Space-Zeichen.
  */
 export interface GuidanceMode {
   readonly id: ModeId;

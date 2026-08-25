@@ -1,4 +1,4 @@
-# Weiß1 — Entscheidungen und Messungen
+# Becoming Many Tutorial — Entscheidungen und Messungen
 
 Diese Datei ist das Werkstattbuch: warum die Zahlen so sind, was vorher
 gescheitert ist, und welche Fallen three.js unter WebGPU stellt. Die README
@@ -40,7 +40,7 @@ die Blickachse.
 
 Ein Pfeil nach rechts löst sich von links nach rechts auf, während man nach
 rechts fliegt: **die Führungsform verbraucht sich selbst, während man ihr
-folgt.** Alle vier Modi benutzen dieselbe Funktion
+folgt.** Die beiden verbleibenden Modi benutzen dieselbe Funktion
 ([`src/particles/tsl/dissolve.ts`](src/particles/tsl/dissolve.ts)) und
 unterscheiden sich nur darin, welche Achse als `s` eingebacken wurde:
 
@@ -86,20 +86,16 @@ die Form war in der Unterzahl. Mit 110 m Tiefe, 60 000 Partikeln und der Form
 | Partikel, die die Form bilden | 89 | 5 572 |
 | Form zu Staub im Bildbereich | 0,8 : 1 | 11,35 : 1 |
 
-Nachmessen lässt sich das jederzeit: `?dev=1` setzt `window.__weiss1` mit
+Nachmessen lässt sich das jederzeit: `?dev=1` setzt `window.__becomingManyTutorial` mit
 Zugriff auf `field.buffers`, und `renderer.getArrayBufferAsync()` liest die
 GPU-Buffer zurück.
 
-## Die vier Pfeil-Varianten (Tasten 1–4)
+## Die zwei Pfeil-Varianten (Tasten 1–2)
 
 | Taste | Variante | Prinzip |
 |---|---|---|
 | **1** | Fern | Große flache Pfeile in weitem Abstand. Man fliegt einfach hindurch — sie lösen sich **nicht** vor den Augen auf. Zwei unabhängige Bänke wechseln sich ab, die passierte springt jenseits der Sichtweite nach vorn. |
 | **2** | Begleiter | Der Pfeil fliegt die ganze Zeit vor einem her. Löst er sich auf, **verwurzeln sich seine Partikel dort, wo sie gerade stehen** — er bleibt als Spur im Raum zurück, während man weiterzieht. |
-| **3** | Schwelle | Figur und Grund vertauscht: ein dichter Vorhang mit einem pfeilförmigen **Loch**. Eine Form aus Punkten muss sonst gegen den Staub anlesen; ein Loch wird umso deutlicher, je dichter die Umgebung ist. |
-| **4** | Zeichner | Der Pfeil wird **gezeichnet**: ein Kopf fährt die Linie ab, was hinter ihm liegt bleibt stehen. Nutzt den stärksten Gruppierungsreiz, den das Auge kennt — gemeinsame Bewegung. |
-
-Tasten **5–8** halten die früheren Sprachen bereit (Kette, Tor, Sog, Blende).
 
 Gemessen über 15 s Flug ohne Eingabe:
 
@@ -107,13 +103,10 @@ Gemessen über 15 s Flug ohne Eingabe:
 |---|---|---|---|
 | Fern | 2 394 | 176 | 320 |
 | Begleiter | **7 319** | **7 314** | **0** |
-| Schwelle | 2 106 | 179 | 320 |
-| Zeichner | 4 240 | 249 | 1 496 |
 
 Der Begleiter ist vollkommen konstant und lässt nichts entstehen — er ist ja
-immer derselbe Pfeil. Beim Zeichner ist das sichtbare Entstehen der Zweck. Die
-Minima bei Fern und Schwelle sind kein Aussetzer, sondern der Moment des
-Durchfliegens: eine flache Form wächst dabei über den Bildrand hinaus.
+immer derselbe Pfeil. Das Minimum bei Fern ist kein Aussetzer, sondern der
+Moment des Durchfliegens: eine flache Form wächst dabei über den Bildrand hinaus.
 
 ### Die zwei Einsichten dahinter
 
@@ -335,5 +328,4 @@ Zusätzlich verstümmeln Vite und Rollup den Netzlaufwerkspfad (`Z:` wird zu
 auch der UNC-Pfad hilft nicht.
 
 Deshalb: entwickelt wird hier, `npm run sync` legt den Quellcode zusätzlich nach
-`Weiß1`. Erlaubt die Freigabe irgendwann Execute, kann der Umweg komplett weg.
-
+`Becoming Many Tutorial`. Erlaubt die Freigabe irgendwann Execute, kann der Umweg komplett weg.

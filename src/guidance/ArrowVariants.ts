@@ -2,14 +2,13 @@ import * as THREE from 'three/webgpu';
 import { CONFIG } from '../config';
 import { cached, type Formation } from '../formations/Formation';
 import { makeArrow } from '../formations/shapes/arrow';
-import { makeThreshold } from '../formations/shapes/threshold';
 import { repeatAlongZ } from '../formations/chain';
 import { forwardOf } from '../flight/Flight';
 import type { GuidanceContext, GuidanceMode, GuidanceReport, GuidanceTask } from './GuidanceMode';
 import { axisProgress, Bezugsbahn, Ratchet } from './progress';
 
 /**
- * Vier Antworten auf dieselbe Frage: wie zeigt man jemandem den Weg, der sich
+ * Zwei Antworten auf dieselbe Frage: wie zeigt man jemandem den Weg, der sich
  * ununterbrochen vorwaerts bewegt?
  *
  * WAS VORHER SCHEITERTE, und warum:
@@ -20,7 +19,7 @@ import { axisProgress, Bezugsbahn, Ratchet } from './progress';
  *    keine Silhouette. Statt eines Pfeils sieht man radiale Schlieren.
  *  - Grosse Wand mit Loch: 3 Partikel je Quadratmeter, unsichtbar.
  *
- * DIE DREI EINSICHTEN, auf denen die vier hier stehen:
+ * DIE DREI EINSICHTEN, auf denen die beiden hier stehen:
  *  1. Wo Staub EXISTIERT und wie weit man ihn SIEHT, sind zwei verschiedene
  *     Dinge. Ist die Box groesser als die Sichtweite, entstehen Formen ausser
  *     Sicht und blenden beim Naeherkommen ein - dann gibt es kein sichtbares
@@ -48,7 +47,6 @@ const _x = new THREE.Vector3();
 const _y = new THREE.Vector3();
 const _z = new THREE.Vector3();
 const _d = new THREE.Vector3();
-const _p = new THREE.Vector3();
 
 /**
  * Eine Form quer zur Flugachse aufstellen.
@@ -181,21 +179,6 @@ function ortVoraus(ctx: GuidanceContext, distanz: number, out: THREE.Vector3) {
     out.z += -Math.cos(gier) * cp * tempo * dtP;
   }
   return out;
-}
-
-/** Wie weit steht der Ort neben der Blickachse? In Radiant. */
-function abweichungVonAchse(ctx: GuidanceContext, ort: THREE.Vector3) {
-  forwardOf(ctx.flight, _f);
-  _p.copy(ort).sub(ctx.flight.position);
-  const l = _p.length();
-  if (l < 1e-3) return 0;
-  return Math.acos(Math.min(1, Math.max(-1, _p.dot(_f) / l)));
-}
-
-/** Liegt der Ort schon hinter dem Flieger? */
-function istPassiert(ctx: GuidanceContext, ort: THREE.Vector3, puffer = 3) {
-  forwardOf(ctx.flight, _f);
-  return _p.copy(ort).sub(ctx.flight.position).dot(_f) < puffer;
 }
 
 /**
@@ -479,137 +462,5 @@ export class EscortArrowMode implements GuidanceMode {
     ctx.field.releaseFormation();
     ctx.uniforms.recruitFar.value = CONFIG.formation.recruitFar;
     ctx.uniforms.recruitDensity.value = CONFIG.formation.recruitDensity;
-  }
-}
-
-// ---------------------------------------------------------------------------
-// 3) Schwelle - der Pfeil ist ein Loch, kein Zeichen
-// ---------------------------------------------------------------------------
-
-/**
- * Ein dichter Vorhang quer zum Flug, mit einem pfeilfoermigen LOCH.
- *
- * Figur und Grund vertauscht. Eine Form aus Punkten muss sonst gegen den
- * ambienten Staub anlesen und wird umso schwerer erkennbar, je mehr Staub da
- * ist. Ein Loch wird genau umgekehrt umso deutlicher. Und es passt zum
- * Grundgedanken: die Welt fuegt kein Zeichen hinzu, sie haelt sich in einer
- * Form zurueck.
- */
-export class ThresholdArrowMode extends ZweiBankBasis {
-  readonly id = 'threshold' as const;
-  readonly label = 'Schwelle';
-  protected readonly spawnWeite = V.schwelle.spawnWeite;
-  protected readonly slotsProBank = V.schwelle.slots;
-  protected readonly werbeWeite = V.schwelle.werbeWeite;
-  protected readonly werbeDichte = V.schwelle.werbeDichte;
-  protected wolke(): Float32Array {
-    return cached(`schwelle:${V.schwelle.laenge}`, () =>
-      makeThreshold(V.schwelle.slots, V.schwelle.breite, V.schwelle.hoehe, V.schwelle.laenge));
-  }
-}
-
-// ---------------------------------------------------------------------------
-// 4) Zeichner - der Pfeil entsteht als Bewegung
-// ---------------------------------------------------------------------------
-
-/**
- * Der Pfeil wird gezeichnet: ein Kopf faehrt die Linie ab, und was hinter ihm
- * liegt, bleibt stehen.
- *
- * Das nutzt den staerksten Gruppierungsreiz, den das Auge kennt - gemeinsame
- * Bewegung. Statt gegen den Staub anzukommen, macht diese Variante das
- * Entstehen selbst zur Aussage.
- */
-export class DrawnArrowMode implements GuidanceMode {
-  readonly id = 'drawn' as const;
-  readonly label = 'Zeichner';
-  private task!: GuidanceTask;
-  private origin = new Bezugsbahn();
-  private ratchet = new Ratchet();
-  private ziel = new THREE.Vector3();
-  private letzteZeige = new THREE.Vector3();
-  private ort = new THREE.Vector3();
-  private achseX = new THREE.Vector3();
-  private achseY = new THREE.Vector3();
-  private kopf = 0;
-  private alter = 0;
-
-  begin(task: GuidanceTask, ctx: GuidanceContext) {
-    this.task = task;
-    this.origin.beginne(ctx.flight);
-    this.ratchet.reset();
-    taskDirection(task, this.ziel);
-    this.letzteZeige.set(0, 0, 0);
-
-    const u = ctx.uniforms;
-    u.bindMode.value = 1;
-    u.strokeKeepZ.value = 0;   // flache Tafel quer zum Flug, kein Tunnel
-    u.dissolveDir.value = 1;
-    u.progress.value = 0;
-    u.formationOn.value = 1;
-    u.formationAge.value = 0;
-    u.strokeZNear.value = -1000; // das z-Fenster begrenzt hier nichts
-    u.strokeZFar.value = 4000;
-    u.strokeCapture.value = V.zeichner.einfang;
-    u.strokeCaptureFar.value = V.zeichner.einfang;
-    u.strokeThickness.value = 0.7;
-
-    this.kopf = 0;
-    this.setzeNeu(ctx);
-  }
-
-  /** Pfeil als Strichzug an fester Weltposition, quer zur Flugrichtung. */
-  private setzeNeu(ctx: GuidanceContext) {
-    const u = ctx.uniforms;
-    ortVoraus(ctx, V.zeichner.spawnWeite, this.ort);
-    forwardOf(ctx.flight, _f);
-
-    // Achsen der Tafel: X in die Zielrichtung, Y senkrecht dazu in der Ebene.
-    this.achseX.copy(zeigeRichtung(this.ziel, _f, this.letzteZeige, _d));
-    this.achseY.crossVectors(_f, this.achseX).normalize().negate();
-
-    const L = V.zeichner.laenge, half = L / 2, barb = L * 0.28;
-    const P = (lx: number, ly: number, out: THREE.Vector3) =>
-      out.copy(this.ort).addScaledVector(this.achseX, lx).addScaledVector(this.achseY, ly);
-
-    P(-half, 0, u.segA0.value); P(half, 0, u.segB0.value);
-    P(half, 0, u.segA1.value); P(half - barb, barb, u.segB1.value);
-    P(half, 0, u.segA2.value); P(half - barb, -barb, u.segB2.value);
-    u.segA3.value.set(1e6, 1e6, 1e6);
-    u.segB3.value.set(1e6, 1e6, 1e6);
-
-    P(-half, 0, u.progOrigin.value);
-    u.progDir.value.copy(this.achseX);
-    u.progLen.value = L;
-    this.kopf = 0;
-  }
-
-  update(ctx: GuidanceContext): GuidanceReport {
-    const u = ctx.uniforms;
-
-    // Den naechsten schon ansetzen, waehrend der aktuelle noch dicht vor einem
-    // steht: so beginnt die Zeichnung, bevor der alte aus dem Blick faellt.
-    this.alter += ctx.dt;
-    if (this.alter > 1.6
-      && (istPassiert(ctx, this.ort, 8) || abweichungVonAchse(ctx, this.ort) > 1.4)) {
-      this.setzeNeu(ctx);
-      this.alter = 0;
-    }
-
-    this.kopf = Math.min(1.15, this.kopf + ctx.dt / V.zeichner.zeichendauer);
-    u.drawHead.value = this.kopf;
-
-    this.origin.schritt(ctx.dt, ctx.flight);
-    const roh = axisProgress(ctx.flight, this.task, this.origin);
-    const p = this.ratchet.step(roh, ctx.dt);
-    u.progress.value = p;
-    return { progress: p, completed: p >= 0.985, event: null };
-  }
-
-  end(_r: 'success' | 'timeout' | 'skip', ctx: GuidanceContext) {
-    ctx.uniforms.formationOn.value = 0;
-    ctx.uniforms.bindMode.value = 0;
-    ctx.uniforms.strokeKeepZ.value = 1;
-    ctx.uniforms.drawHead.value = 1;
   }
 }

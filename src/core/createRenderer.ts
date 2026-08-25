@@ -21,9 +21,9 @@ export async function createRenderer(parent: HTMLElement) {
 
   const backend = renderer.backend as { isWebGPUBackend?: boolean };
   const usingWebGPU = backend.isWebGPUBackend === true;
-  console.info(`[Weiss1] backend: ${usingWebGPU ? 'WebGPU' : 'WebGL2 fallback'}`);
+  console.info(`[Becoming Many Tutorial] backend: ${usingWebGPU ? 'WebGPU' : 'WebGL2 fallback'}`);
   if (!usingWebGPU) {
-    console.warn('[Weiss1] WebGPU nicht aktiv - Performance-Messungen sind ab hier nicht aussagekraeftig.');
+    console.warn('[Becoming Many Tutorial] WebGPU nicht aktiv - Performance-Messungen sind ab hier nicht aussagekraeftig.');
   }
 
   return { renderer, usingWebGPU };

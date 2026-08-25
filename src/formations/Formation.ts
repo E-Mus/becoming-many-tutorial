@@ -10,7 +10,7 @@ import type { Buffers } from '../particles/buffers';
  *
  * `s` ist die Fortschrittsachse: die normierte Koordinate, entlang derer die
  * Form sich aufzehrt oder aufbaut. Sie ist der einzige Unterschied zwischen den
- * vier Fuehrungssprachen.
+ * beiden Fuehrungssprachen.
  */
 export interface Formation {
   /** slotCount*4 Floats: [x, y, z, s] je Slot, formationslokal */

@@ -69,7 +69,7 @@ export class Director {
   start() { this.advance(false); }
 
   /**
-   * Live-Umschaltung der Fuehrungssprache (Dev-Tasten 1-4).
+   * Live-Umschaltung der Fuehrungssprache (Dev-Tasten 1-2).
    *
    * Gleicher Beat, gleicher Flugzustand, andere Sprache - nur so ist der
    * Vergleich ehrlich. Laeuft gerade eine Atempause, wird sie uebersprungen:

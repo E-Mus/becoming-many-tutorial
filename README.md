@@ -1,4 +1,4 @@
-# Weiß1
+# Becoming Many Tutorial
 
 Tutorial-Szene für **Becoming Many** (Icaros-VR-Flugsimulator).
 
@@ -49,12 +49,6 @@ während man weiterfliegt.
 
 ![Modus 2 — Begleiter](docs/bilder/modus2-begleiter.png)
 
-Zwei weitere Sprachen liegen daneben und sind über die Tasten erreichbar:
-**Schwelle** (der Pfeil ist ein Loch in einem dichten Vorhang, Figur und Grund
-vertauscht) und **Zeichner** (der Pfeil entsteht als Bewegung, ein Kopf fährt
-die Linie ab).
-
-
 ## Starten
 
 ```bash
@@ -63,20 +57,20 @@ npm run dev
 ```
 
 Dann die URL öffnen, die Vite ausgibt (`5173`, oder der nächste freie Port).
-**WASD** fliegt, **1–4** wechselt die Führungssprache.
+**WASD** fliegt, **1–2** wechselt die Führungssprache.
 
 Die ersten 15 Sekunden sind Atempausen ohne Aufgabe: das Feld blendet auf, dann
 setzt die Vorwärtsfahrt ein. Zum Überspringen gibt es URL-Parameter:
 
 | Parameter | Wirkung |
 |---|---|
-| `?dev=1` | Anzeige mit Reglern, dazu `window.__weiss1` für Messungen |
+| `?dev=1` | Anzeige mit Reglern, dazu `window.__becomingManyTutorial` für Messungen |
 | `?beat=rechts` | direkt in eine Aufgabe (`rechts`, `links`, `hoch`, `runter`) |
 | `?mode=escort` | Führungssprache vorwählen |
 | `?freeze=1` | Regie anhalten, Form stehen lassen |
 
 Vorher einmal in `chrome://gpu` prüfen, ob **WebGPU: Hardware accelerated**
-steht. In der Konsole muss `[Weiss1] backend: WebGPU` erscheinen — steht dort
+steht. In der Konsole muss `[Becoming Many Tutorial] backend: WebGPU` erscheinen — steht dort
 `WebGL2 fallback`, ist jede Performance-Zahl danach wertlos.
 
 | Skript | Zweck |
@@ -98,7 +92,7 @@ src/
   particles/         Buffer, vier Compute-Kernel, Material
     tsl/             floorMod · drift · ambient · dissolve
   formations/        Formen -> Punktwolken mit eingebackener Fortschrittsachse
-  guidance/          die vier Sprachen hinter einem Interface
+  guidance/          die zwei Sprachen hinter einem Interface
 ```
 
 Zwei Dateien tragen die künstlerische Absicht und brauchen kein Engine-Wissen:
@@ -110,8 +104,8 @@ unter WebGPU stellt, steht in [docs/entscheidungen.md](docs/entscheidungen.md).
 
 ## Stand
 
-Fertig: Partikelfeld, freier Flug mit WASD, Bugwelle, Formations-Pipeline, alle
-vier Führungssprachen, Fortschritts-Kopplung, Regie.
+Fertig: Partikelfeld, freier Flug mit WASD, Bugwelle, Formations-Pipeline, die
+zwei Führungssprachen Fern und Begleiter, Fortschritts-Kopplung, Regie.
 
 Offen: der VR-Durchgang (Feld-Roll statt Kamera-Roll, `renderer.xr`,
 Headset-Test) und das echte Icaros — meldet es sich in

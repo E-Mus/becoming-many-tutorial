@@ -1,9 +1,9 @@
 {
-  "name": "weiss1",
+  "name": "becoming-many-tutorial",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Weiß1 — Partikel-Tutorial für Becoming Many",
+  "description": "Becoming Many Tutorial",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

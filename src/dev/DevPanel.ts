@@ -38,8 +38,7 @@ export class DevPanel {
     const hint = document.createElement('div');
     hint.style.cssText = 'margin-top:8px;opacity:.65;line-height:1.6';
     hint.innerHTML =
-      '<b>1</b> Fern &nbsp; <b>2</b> Begleiter &nbsp; <b>3</b> Schwelle &nbsp; <b>4</b> Zeichner<br>' +
-      '<span style="opacity:.7">5-8 fr&uuml;here Sprachen</span><br>' +
+      '<b>1</b> Fern &nbsp; <b>2</b> Begleiter<br>' +
       'WASD fliegen &middot; <b>P</b> Fortschritt einfrieren';
     this.el.appendChild(hint);
 
@@ -87,7 +86,7 @@ export class DevPanel {
       : '<span style="color:#a33">keine (Atempause)</span>';
 
     this.info.innerHTML = [
-      '<b>Wei&szlig;1</b> &nbsp; ' + fps.toFixed(0) + ' fps',
+      '<b>Becoming Many Tutorial</b> &nbsp; ' + fps.toFixed(0) + ' fps',
       'Variante &nbsp; <b>' + label + '</b> <span style="opacity:.5">' + nr +
         (nr <= ARROW_VARIANTS ? '/' + ARROW_VARIANTS : '') + '</span>',
       'Beat &nbsp; <b>' + (b?.id ?? '—') + '</b> &nbsp; Form ' + form,

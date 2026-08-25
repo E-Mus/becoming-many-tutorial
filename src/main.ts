@@ -56,7 +56,7 @@ window.addEventListener('keydown', (e) => {
     director.setMode(id);
     // Auch ohne Dev-Anzeige nachvollziehbar: laeuft gerade eine Atempause,
     // springt setMode zur naechsten Aufgabe, damit der Wechsel sichtbar wird.
-    console.info(`[Weiss1] Sprache: ${id} — Beat: ${director.currentBeat?.id ?? 'Ende'}`);
+    console.info(`[Becoming Many Tutorial] Sprache: ${id} — Beat: ${director.currentBeat?.id ?? 'Ende'}`);
   }
   if (e.code === 'KeyP') manualProgress = !manualProgress;
 });
@@ -104,9 +104,12 @@ loop.start();
 
 // Dev-Zugriff fuer Messungen von aussen (nur mit ?dev=1).
 if (opts.dev) {
-  (window as unknown as Record<string, unknown>).__weiss1 = {
+  const debugApi = {
     flight, director, uniforms, field, loop, opts,
   };
+  const globals = window as unknown as Record<string, unknown>;
+  globals.__becomingManyTutorial = debugApi;
+  globals.__weiss1 = debugApi;
 }
 
-console.info('[Weiss1] bereit — WASD fliegen, 1-4 Modus wechseln.');
+console.info('[Becoming Many Tutorial] bereit - WASD fliegen, 1-2 Modus wechseln.');

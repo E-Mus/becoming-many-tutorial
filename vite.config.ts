@@ -3,7 +3,7 @@ import { defineConfig } from 'vite';
 function githubPagesBase() {
   if (!process.env.GITHUB_ACTIONS) return './';
 
-  const repo = process.env.GITHUB_REPOSITORY?.split('/')[1] ?? 'weiss1';
+  const repo = process.env.GITHUB_REPOSITORY?.split('/')[1] ?? 'becoming-many-tutorial';
   return repo.endsWith('.github.io') ? '/' : `/${repo}/`;
 }
 

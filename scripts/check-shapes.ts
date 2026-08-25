@@ -12,7 +12,6 @@ import { makeArrow } from '../src/formations/shapes/arrow';
 import { makeArrowContour } from '../src/formations/shapes/arrowContour';
 import { makeRing } from '../src/formations/shapes/ring';
 import { makeAperture } from '../src/formations/shapes/aperture';
-import { makeThreshold } from '../src/formations/shapes/threshold';
 import { chainAnchorZ, repeatAlongZ } from '../src/formations/chain';
 import { CONFIG } from '../src/config';
 
@@ -152,39 +151,6 @@ console.log('\nPfeil-Kontur — der Deckungsgrad entscheidet, nicht die Partikel
   const abstandF = Math.sqrt(flaeche / gebunden);
   const deckungF = (Math.PI / 4) * Math.pow(punktWinkel / (abstandF / dist), 2);
   console.log(`         (gefuellt waeren es ${(100 * deckungF).toFixed(0)} % — grauer Nebel)`);
-}
-
-
-console.log('\nSchwelle — der Pfeil muss ein LOCH sein, keine Figur');
-{
-  const B = 19, H = 13.5, AL = 9;
-  const sw = makeThreshold(N, B, H, AL);
-  const rs = sRange(sw);
-  check('s liegt in [0,1]', rs.lo >= -0.001 && rs.hi <= 1.001, `[${rs.lo.toFixed(3)}, ${rs.hi.toFixed(3)}]`);
-
-  // Kein Slot darf im Pfeil liegen - sonst ist das Loch kein Loch.
-  const schaftHalb = AL * 0.1, kopfLang = AL * 0.34, kopfHalb = AL * 0.26;
-  const schaftEnde = AL - kopfLang;
-  const imPfeil = (x: number, y: number) => {
-    const lx = x + AL / 2;
-    if (lx < 0 || lx > AL) return false;
-    if (lx <= schaftEnde) return Math.abs(y) <= schaftHalb;
-    return Math.abs(y) <= kopfHalb * (1 - (lx - schaftEnde) / kopfLang);
-  };
-  let drin = 0, ausserhalb = 0;
-  for (let i = 0; i < N; i++) {
-    if (imPfeil(sw[i * 4], sw[i * 4 + 1])) drin++;
-    if (Math.abs(sw[i * 4]) > B / 2 + 0.01 || Math.abs(sw[i * 4 + 1]) > H / 2 + 0.01) ausserhalb++;
-  }
-  check('kein Slot liegt im Pfeil (das Loch ist leer)', drin === 0, `${drin} Verstoesse`);
-  check('kein Slot verlaesst den Vorhang', ausserhalb === 0, `${ausserhalb} Verstoesse`);
-  const cs = corr(sw, 0, 3);
-  check('s korreliert mit +X (Zeigerichtung)', cs > 0.99, `r = ${cs.toFixed(4)}`);
-
-  // Dichte: die fruehere bildfuellende Wand kam auf 3 Punkte je m² und war
-  // unsichtbar. Ein Loch liest sich nur in einem wirklich dichten Vorhang.
-  const proQm = N / (B * H);
-  check('Vorhang ist dicht genug fuer ein Loch', proQm > 12, `${proQm.toFixed(1)} Punkte je m²`);
 }
 
 

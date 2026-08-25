@@ -26,6 +26,8 @@ export interface Beat {
   voice?: VoiceCue;
   /** Der naechste Beat beginnt erst, wenn die Sprachdatei zu Ende ist. */
   waitForVoice?: boolean;
+  /** Der naechste Beat beginnt diese Anzahl Sekunden vor dem Audioende. */
+  advanceBeforeVoiceEnd?: number;
   /** Freitext fuer die Dev-Anzeige. */
   note?: string;
 }
@@ -58,8 +60,8 @@ export const BEATS: Beat[] = [
     note: 'Das Feld blendet auf. Stillstand. Nichts passiert - und das ist Inhalt.' },
 
   { id: 'bemerken', task: null, minDuration: 0,
-    voice: 'anfangundrechts', waitForVoice: true,
-    note: 'Die Vorwaertsdrift und die Einleitung beginnen. Ihr Ende ruft den ersten Pfeil.' },
+    voice: 'anfangundrechts', advanceBeforeVoiceEnd: 3,
+    note: 'Die Vorwaertsdrift und die Einleitung beginnen. Der erste Pfeil kommt drei Sekunden vor ihrem Ende.' },
 
   { id: 'rechts', task: t('x', 1, 7), minDuration: 0 },
   { id: 'links', task: t('x', -1, 7), minDuration: 0, voice: 'links' },

@@ -130,12 +130,13 @@ export class Director {
       this.mode.begin(beat.task, this.ctx(0));
     }
     if (beat.voice) {
-      this.voice.play(
-        beat.voice,
-        beat.waitForVoice ? () => this.advanceAfterVoice(beat) : undefined,
-      );
-    } else {
-      this.voice.stop();
+      this.voice.play(beat.voice, {
+        onEnded: beat.waitForVoice ? () => this.advanceAfterVoice(beat) : undefined,
+        onBeforeEnd: beat.advanceBeforeVoiceEnd !== undefined
+          ? () => this.advanceAfterVoice(beat)
+          : undefined,
+        secondsBeforeEnd: beat.advanceBeforeVoiceEnd,
+      });
     }
     this.onBeat?.(beat);
   }
@@ -156,7 +157,7 @@ export class Director {
     // Atempausen: Feld und Tempo fahren, keine Aufgabe.
     if (!beat.task) {
       this.driveInterlude(beat, dt);
-      if (beat.voice && beat.waitForVoice) return;
+      if (beat.voice && (beat.waitForVoice || beat.advanceBeforeVoiceEnd !== undefined)) return;
       if (this.beatTime >= beat.minDuration) this.advance(true);
       return;
     }

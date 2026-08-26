@@ -2,6 +2,7 @@ import type * as THREE from 'three/webgpu';
 import type { ParticleField } from '../particles/ParticleField';
 import type { Uniforms } from '../core/Uniforms';
 import type { FlightState } from '../flight/Flight';
+import type { FlightInput } from '../input/InputSource';
 
 /**
  * Nur die vier Himmelsrichtungen des Bildes: rechts, links, hoch, runter.
@@ -17,8 +18,8 @@ export interface GuidanceTask {
   axis: Axis;
   /** Richtung entlang der Achse */
   sign: 1 | -1;
-  /** Meter seitlicher/vertikaler Versatz bis progress = 1 */
-  amount: number;
+  /** Sekunden Vollauslenkung nach dem sichtbaren Pfeil bis progress = 1. */
+  controlEffort: number;
   /**
    * Legacy-Wert aus frueheren Modi. Die aktiven Varianten platzieren ihre
    * Formen entlang der aktuellen Flugachse.
@@ -32,6 +33,8 @@ export interface GuidanceContext {
   field: ParticleField;
   uniforms: Uniforms;
   flight: FlightState;
+  /** Aktuelle, bereits zusammengefuehrte Tastatur-/Gamepad-Eingabe. */
+  input: FlightInput;
   dt: number;
 }
 

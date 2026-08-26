@@ -88,7 +88,7 @@ const loop = new Loop((dt) => {
   stepFlight(flight, cmd, dt);
 
   if (!opts.freeze && !manualProgress) {
-    director.update(dt);
+    director.update(dt, cmd);
   }
   // Laeuft immer: die Formation altert auch im Standbild-Modus weiter, damit
   // sich die Versammlung der Partikel fertig aufbauen kann.

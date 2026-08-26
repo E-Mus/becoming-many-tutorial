@@ -40,9 +40,9 @@ export interface Beat {
 const t = (
   axis: GuidanceTask['axis'],
   sign: 1 | -1,
-  amount: number,
+  controlEffort: number,
   distanceAhead = 30,
-): GuidanceTask => ({ axis, sign, amount, distanceAhead, intensity: 0 });
+): GuidanceTask => ({ axis, sign, controlEffort, distanceAhead, intensity: 0 });
 
 /**
  * ALLE VIER RICHTUNGEN KOMMEN IMMER DRAN.
@@ -63,11 +63,11 @@ export const BEATS: Beat[] = [
     voice: 'anfangundrechts', advanceBeforeVoiceEnd: 3,
     note: 'Die Vorwaertsdrift und die Einleitung beginnen. Der erste Pfeil kommt drei Sekunden vor ihrem Ende.' },
 
-  { id: 'rechts', task: t('x', 1, 7), minDuration: 0 },
-  { id: 'links', task: t('x', -1, 7), minDuration: 0, voice: 'links' },
+  { id: 'rechts', task: t('x', 1, 1.3), minDuration: 0 },
+  { id: 'links', task: t('x', -1, 1.3), minDuration: 0, voice: 'links' },
 
-  { id: 'hoch', task: t('y', 1, 5), minDuration: 0, voice: 'oben' },
-  { id: 'runter', task: t('y', -1, 5), minDuration: 0, voice: 'unten' },
+  { id: 'hoch', task: t('y', 1, 1.3), minDuration: 0, voice: 'oben' },
+  { id: 'runter', task: t('y', -1, 1.3), minDuration: 0, voice: 'unten' },
 
   { id: 'entlassen', task: null, minDuration: 0,
     voice: 'ende', waitForVoice: true,

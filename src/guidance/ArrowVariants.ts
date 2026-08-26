@@ -3,9 +3,9 @@ import { CONFIG } from '../config';
 import { cached, type Formation } from '../formations/Formation';
 import { makeArrow } from '../formations/shapes/arrow';
 import { repeatAlongZ } from '../formations/chain';
-import { forwardOf } from '../flight/Flight';
+import { forwardOf, rightOf, upOf } from '../flight/Flight';
 import type { GuidanceContext, GuidanceMode, GuidanceReport, GuidanceTask } from './GuidanceMode';
-import { axisProgress, Bezugsbahn, Ratchet } from './progress';
+import { TaskProgress } from './progress';
 
 /**
  * Zwei Antworten auf dieselbe Frage: wie zeigt man jemandem den Weg, der sich
@@ -34,10 +34,14 @@ import { axisProgress, Bezugsbahn, Ratchet } from './progress';
 // Gemeinsames
 // ---------------------------------------------------------------------------
 
-/** Zielrichtung der Aufgabe als Weltvektor. */
-export function taskDirection(task: GuidanceTask, out = new THREE.Vector3()) {
-  if (task.axis === 'x') return out.set(task.sign, 0, 0);
-  return out.set(0, task.sign, 0);
+/** Zielrichtung der Aufgabe relativ zum aktuellen Flugkoerper. */
+export function taskDirection(
+  task: GuidanceTask,
+  flight: GuidanceContext['flight'],
+  out = new THREE.Vector3(),
+) {
+  if (task.axis === 'x') return rightOf(flight, out).multiplyScalar(task.sign);
+  return upOf(flight, out).multiplyScalar(task.sign);
 }
 
 const V = CONFIG.varianten;
@@ -75,27 +79,9 @@ function stelleQuer(
 /**
  * Wohin der Pfeil im BILD zeigt.
  *
- * Die Zielrichtung ist eine Weltachse; im Bild sichtbar ist nur ihr Anteil quer
- * zur Blickrichtung. Fliegt man bereits genau in die Zielrichtung, bleibt davon
- * nichts uebrig - dann gibt es im Bild keine Richtung mehr.
- *
- * DER ALTE AUSWEG WAR DER FEHLER. Er nahm in diesem Fall die Weltachse +X, und
- * die ist ausgerechnet dort selbst entartet. Nachgerechnet fuer die Aufgabe
- * "links" (Ziel = Welt -X), waehrend der Flieger einschwenkt:
- *
- *   yaw 88.0 Grad   |Projektion| 0.0349   Pfeil zeigt LINKS    <- richtig
- *   yaw 89.5 Grad   |Projektion| 0.0087   Pfeil zeigt RECHTS   <- gekippt
- *   yaw 90.0 Grad   |Projektion| 0.0000   NULLVEKTOR, entartete Basis
- *   yaw 90.5 Grad   |Projektion| 0.0087   Pfeil zeigt LINKS
- *   yaw 91.0 Grad   |Projektion| 0.0175   Pfeil zeigt RECHTS
- *
- * Also genau in dem Moment, in dem man endlich in die befohlene Richtung
- * fliegt, kippte das Zeichen um 180 Grad und behauptete das Gegenteil. Im
- * Begleiter-Modus, wo die Platzierung jedes Bild neu gerechnet wird, war das
- * live zu sehen: aus "links" wurde "rechts".
- *
- * Jetzt wird die letzte tragfaehige Richtung behalten. Sie kann nicht kippen,
- * und sie bleibt die richtige Aussage: weiter so.
+ * Die Zielrichtung kommt aus der Rechts-/Oben-Achse des Flugkoerpers und liegt
+ * damit bereits quer zur Blickrichtung. `letzte` bleibt als Sicherung erhalten,
+ * falls eine numerisch fast entartete Basis ankommt.
  */
 function zeigeRichtung(
   ziel: THREE.Vector3,
@@ -193,8 +179,7 @@ abstract class ZweiBankBasis implements GuidanceMode {
   abstract readonly id: GuidanceMode['id'];
   abstract readonly label: string;
   protected task!: GuidanceTask;
-  protected origin = new Bezugsbahn();
-  protected ratchet = new Ratchet();
+  protected progress = new TaskProgress();
   private matA = new THREE.Matrix4();
   private matB = new THREE.Matrix4();
   private ortA = new THREE.Vector3();
@@ -223,9 +208,8 @@ abstract class ZweiBankBasis implements GuidanceMode {
 
   begin(task: GuidanceTask, ctx: GuidanceContext) {
     this.task = task;
-    this.origin.beginne(ctx.flight);
-    this.ratchet.reset();
-    taskDirection(task, this.ziel);
+    this.progress.begin(task, ctx.input, this.presentationDelay(ctx));
+    taskDirection(task, ctx.flight, this.ziel);
     this.letzteZeige.set(0, 0, 0);
     ctx.uniforms.bindMode.value = 0;
 
@@ -267,9 +251,17 @@ abstract class ZweiBankBasis implements GuidanceMode {
     ctx.field.beginBanks(formation, this.matA, this.matB);
   }
 
+  private presentationDelay(ctx: GuidanceContext) {
+    const bisSichtbar = Math.max(0, this.spawnWeite * 2 - CONFIG.particles.viewFar)
+      / Math.max(ctx.flight.forwardSpeed, 1);
+    const bisGeformt = CONFIG.formation.appearSpread + CONFIG.formation.appearWidth;
+    return Math.max(bisSichtbar, bisGeformt);
+  }
+
   private setze(m: THREE.Matrix4, ort: THREE.Vector3, ctx: GuidanceContext, distanz: number) {
     ortVoraus(ctx, distanz, ort);
     forwardOf(ctx.flight, _f);
+    taskDirection(this.task, ctx.flight, this.ziel);
     stelleQuer(m, ort, _f, zeigeRichtung(this.ziel, _f, this.letzteZeige, _d));
   }
 
@@ -282,6 +274,7 @@ abstract class ZweiBankBasis implements GuidanceMode {
    */
   private parke(m: THREE.Matrix4, ort: THREE.Vector3, ctx: GuidanceContext) {
     forwardOf(ctx.flight, _f);
+    taskDirection(this.task, ctx.flight, this.ziel);
     ort.copy(ctx.flight.position).addScaledVector(_f, -200);
     stelleQuer(m, ort, _f, zeigeRichtung(this.ziel, _f, this.letzteZeige, _d));
   }
@@ -333,9 +326,7 @@ abstract class ZweiBankBasis implements GuidanceMode {
       this.restB = this.zyklus;
     }
 
-    this.origin.schritt(ctx.dt, ctx.flight);
-    const roh = axisProgress(ctx.flight, this.task, this.origin);
-    const p = this.ratchet.step(roh, ctx.dt);
+    const p = this.progress.step(ctx.input, ctx.dt);
     // Zehrt sich die Form nicht auf, bleibt der Shader-Fortschritt auf 0 - man
     // fliegt einfach hindurch, und die Rueckmeldung ist, dass keine neuen mehr
     // kommen.
@@ -343,7 +334,7 @@ abstract class ZweiBankBasis implements GuidanceMode {
     ctx.uniforms.recruitFar.value = this.werbeWeite;
     ctx.uniforms.recruitDensity.value = this.werbeDichte + this.task.intensity * 0.15;
     ctx.uniforms.werbeFernAb.value = CONFIG.particles.viewFar;
-    return { progress: p, completed: p >= 0.985, event: null };
+    return { progress: p, completed: p >= 1, event: null };
   }
 
   end(_r: 'success' | 'timeout' | 'skip', ctx: GuidanceContext) {
@@ -400,8 +391,7 @@ export class EscortArrowMode implements GuidanceMode {
   readonly id = 'escort' as const;
   readonly label = 'Begleiter';
   private task!: GuidanceTask;
-  private origin = new Bezugsbahn();
-  private ratchet = new Ratchet();
+  private progress = new TaskProgress();
   private matrix = new THREE.Matrix4();
   private ziel = new THREE.Vector3();
   private letzteZeige = new THREE.Vector3();
@@ -409,9 +399,9 @@ export class EscortArrowMode implements GuidanceMode {
 
   begin(task: GuidanceTask, ctx: GuidanceContext) {
     this.task = task;
-    this.origin.beginne(ctx.flight);
-    this.ratchet.reset();
-    taskDirection(task, this.ziel);
+    const presentationDelay = CONFIG.formation.appearSpread + CONFIG.formation.appearWidth;
+    this.progress.begin(task, ctx.input, presentationDelay);
+    taskDirection(task, ctx.flight, this.ziel);
     this.letzteZeige.set(0, 0, 0);
 
     const slots = cached(`begleiter:${V.begleiter.laenge}`, () =>
@@ -440,6 +430,7 @@ export class EscortArrowMode implements GuidanceMode {
 
   private platziere(ctx: GuidanceContext) {
     forwardOf(ctx.flight, _f);
+    taskDirection(this.task, ctx.flight, this.ziel);
     this.ort.copy(ctx.flight.position).addScaledVector(_f, V.begleiter.abstand);
     stelleQuer(this.matrix, this.ort, _f, zeigeRichtung(this.ziel, _f, this.letzteZeige, _d));
   }
@@ -449,13 +440,11 @@ export class EscortArrowMode implements GuidanceMode {
     this.platziere(ctx);
     ctx.uniforms.formationMatrix.value.copy(this.matrix);
 
-    this.origin.schritt(ctx.dt, ctx.flight);
-    const roh = axisProgress(ctx.flight, this.task, this.origin);
-    const p = this.ratchet.step(roh, ctx.dt);
+    const p = this.progress.step(ctx.input, ctx.dt);
     ctx.uniforms.progress.value = p;
     ctx.uniforms.recruitFar.value = V.begleiter.werbeWeite;
     ctx.uniforms.recruitDensity.value = V.begleiter.werbeDichte + this.task.intensity * 0.15;
-    return { progress: p, completed: p >= 0.985, event: null };
+    return { progress: p, completed: p >= 1, event: null };
   }
 
   end(_r: 'success' | 'timeout' | 'skip', ctx: GuidanceContext) {

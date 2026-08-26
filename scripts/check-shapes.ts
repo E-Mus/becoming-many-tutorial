@@ -14,6 +14,9 @@ import { makeRing } from '../src/formations/shapes/ring';
 import { makeAperture } from '../src/formations/shapes/aperture';
 import { chainAnchorZ, repeatAlongZ } from '../src/formations/chain';
 import { CONFIG } from '../src/config';
+import { TaskProgress } from '../src/guidance/progress';
+import type { GuidanceTask } from '../src/guidance/GuidanceMode';
+import type { FlightInput } from '../src/input/InputSource';
 
 let failed = 0;
 function check(name: string, ok: boolean, detail: string) {
@@ -252,6 +255,61 @@ console.log('\nPfeil-Varianten — Gestalt behalten, Umgebung nicht leerraeumen'
     check(`${name}: Werbeweite bleibt in der Groessenordnung der Form`, r <= v.laenge * 3,
       `${r} m fuer einen ${v.laenge}-m-Pfeil`);
   }
+}
+
+console.log('\nTutorial-Fortschritt — nur eine neue, passende Eingabe darf zaehlen');
+{
+  const input = (lateral: number, vertical: number): FlightInput => ({ lateral, vertical });
+  const task = (axis: GuidanceTask['axis'], sign: 1 | -1): GuidanceTask => ({
+    axis, sign, controlEffort: 1, distanceAhead: 30, intensity: 0,
+  });
+  const run = (progress: TaskProgress, value: FlightInput, seconds: number) => {
+    const dt = 0.02;
+    for (let elapsed = 0; elapsed < seconds; elapsed += dt) progress.step(value, dt);
+    return progress.progress;
+  };
+
+  const held = new TaskProgress();
+  held.begin(task('x', 1), input(1, 0), 0.5);
+  run(held, input(1, 0), 2);
+  check('vor dem Pfeil gehaltenes Rechts bleibt gesperrt', held.progress === 0 && !held.isArmed,
+    `progress ${held.progress.toFixed(2)}, armed ${held.isArmed}`);
+
+  run(held, input(0, 0), CONFIG.tutorial.neutralHold + 0.08);
+  check('Loslassen schaltet genau diese Aufgabe scharf', held.isArmed && held.progress === 0,
+    `progress ${held.progress.toFixed(2)}, armed ${held.isArmed}`);
+
+  run(held, input(-1, 0), 1);
+  check('die falsche Richtung erzeugt keinen Fortschritt', held.progress === 0,
+    `progress ${held.progress.toFixed(2)}`);
+
+  run(held, input(1, 0), 0.5);
+  check('eine neue passende Eingabe zaehlt proportional', Math.abs(held.progress - 0.5) < 0.03,
+    `progress ${held.progress.toFixed(2)}`);
+  run(held, input(1, 0), 0.5);
+  check('erst die vollstaendige Eingabe beendet den Schritt', held.progress === 1,
+    `progress ${held.progress.toFixed(2)}`);
+
+  const directions: Array<[GuidanceTask['axis'], 1 | -1, FlightInput]> = [
+    ['x', 1, input(1, 0)],
+    ['x', -1, input(-1, 0)],
+    ['y', 1, input(0, 1)],
+    ['y', -1, input(0, -1)],
+  ];
+  const allDirections = directions.every(([axis, sign, control]) => {
+    const progress = new TaskProgress();
+    progress.begin(task(axis, sign), input(0, 0), 0);
+    run(progress, control, 1);
+    return progress.progress === 1;
+  });
+  check('alle vier Schritte nutzen dieselbe Kopplung', allDirections,
+    allDirections ? 'rechts, links, hoch, runter' : 'mindestens eine Richtung fehlgeschlagen');
+
+  const unrelated = new TaskProgress();
+  unrelated.begin(task('y', 1), input(0, 0), 0);
+  run(unrelated, input(1, 0), 2);
+  check('eine andere Steuerachse kann nichts vorerfuellen', unrelated.progress === 0,
+    `progress ${unrelated.progress.toFixed(2)}`);
 }
 
 console.log(failed === 0 ? '\nAlle Formen in Ordnung.\n' : `\n${failed} Pruefung(en) fehlgeschlagen.\n`);

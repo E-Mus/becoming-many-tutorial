@@ -189,6 +189,12 @@ export const CONFIG = {
     /** Sekunden ohne Fortschritt, bevor die Eskalation ueberhaupt einsetzt.
      *  Das Nichtstun ist Inhalt. */
     silence: 3,
+    /** Unter diesem Ausschlag gilt eine Steuerachse als losgelassen. */
+    inputNeutral: 0.08,
+    /** So lange muss eine vorab gehaltene Achse neutral sein, bevor sie zaehlt. */
+    neutralHold: 0.12,
+    /** Erst oberhalb dieses Ausschlags entsteht Aufgabenfortschritt. */
+    inputActuation: 0.12,
   },
   /**
    * Die beiden Pfeil-Varianten.

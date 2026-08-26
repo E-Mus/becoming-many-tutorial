@@ -2,6 +2,7 @@ import { CONFIG } from '../config';
 import type { Uniforms } from '../core/Uniforms';
 import type { ParticleField } from '../particles/ParticleField';
 import type { FlightState } from '../flight/Flight';
+import type { FlightInput } from '../input/InputSource';
 import type { GuidanceContext, GuidanceMode, ModeId } from '../guidance/GuidanceMode';
 import { GUIDANCE_MODES } from '../guidance/registry';
 import { BEATS, type Beat } from './beats';
@@ -44,6 +45,7 @@ export class Director {
   private readonly mode: GuidanceMode;
   private readonly modeId: ModeId;
   private readonly voice = new VoicePlayer();
+  private input: FlightInput = { lateral: 0, vertical: 0 };
   finished = false;
 
   constructor(
@@ -67,7 +69,7 @@ export class Director {
   get hasTask() { return this.currentBeat?.task != null; }
 
   private ctx(dt: number): GuidanceContext {
-    return { field: this.field, uniforms: this.uniforms, flight: this.flight, dt };
+    return { field: this.field, uniforms: this.uniforms, flight: this.flight, input: this.input, dt };
   }
 
   start() { this.advance(false); }
@@ -109,7 +111,8 @@ export class Director {
   /** Haken fuer die Dev-Anzeige. */
   onBeat?: (beat: Beat) => void;
 
-  update(dt: number) {
+  update(dt: number, input: FlightInput) {
+    this.input = input;
     if (this.finished) return;
     const beat = this.currentBeat;
     if (!beat) return;

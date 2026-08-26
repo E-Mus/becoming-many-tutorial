@@ -47,16 +47,19 @@ director.start();
 
 const panel = opts.dev ? new DevPanel(uniforms, director) : null;
 
-// --- Tasten: Modus umschalten, Fortschritt von Hand ------------------------
+// --- Tasten: Modus mit Neustart waehlen, Fortschritt von Hand --------------
 let manualProgress = false;
 window.addEventListener('keydown', (e) => {
   const n = Number(e.key);
   if (n >= 1 && n <= MODE_ORDER.length) {
     const id = MODE_ORDER[n - 1];
-    director.setMode(id);
-    // Auch ohne Dev-Anzeige nachvollziehbar: laeuft gerade eine Atempause,
-    // springt setMode zur naechsten Aufgabe, damit der Wechsel sichtbar wird.
-    console.info(`[Becoming Many Tutorial] Sprache: ${id} — Beat: ${director.currentBeat?.id ?? 'Ende'}`);
+    if (id !== director.currentModeId && !e.repeat) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('mode', id);
+      url.searchParams.delete('beat');
+      url.searchParams.delete('freeze');
+      window.location.replace(url);
+    }
   }
   if (e.code === 'KeyP') manualProgress = !manualProgress;
 });

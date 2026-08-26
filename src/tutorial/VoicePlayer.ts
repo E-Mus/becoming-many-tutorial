@@ -11,7 +11,7 @@ const VOICE_URLS: Record<VoiceCue, string> = {
   links: `${import.meta.env.BASE_URL}audio/links.wav`,
   oben: `${import.meta.env.BASE_URL}audio/oben.wav`,
   unten: `${import.meta.env.BASE_URL}audio/unten.wav`,
-  ende: `${import.meta.env.BASE_URL}audio/ende.wav`,
+  ende: `${import.meta.env.BASE_URL}audio/ende.wav?v=2s-cut`,
 };
 
 /**

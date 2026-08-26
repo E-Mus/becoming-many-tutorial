@@ -41,8 +41,8 @@ export class Director {
   private index = -1;
   private beatTime = 0;
   private stalled = 0;
-  private mode: GuidanceMode;
-  private modeId: ModeId;
+  private readonly mode: GuidanceMode;
+  private readonly modeId: ModeId;
   private readonly voice = new VoicePlayer();
   finished = false;
 
@@ -71,45 +71,6 @@ export class Director {
   }
 
   start() { this.advance(false); }
-
-  /**
-   * Live-Umschaltung der Fuehrungssprache (Dev-Tasten 1-2).
-   *
-   * Gleicher Beat, gleicher Flugzustand, andere Sprache - nur so ist der
-   * Vergleich ehrlich. Laeuft gerade eine Atempause, wird sie uebersprungen:
-   * eine Taste, die nichts Sichtbares tut, ist fuer die Bedienende kaputt,
-   * auch wenn intern alles stimmt.
-   */
-  setMode(id: ModeId, dt = 0) {
-    if (id === this.modeId) return;
-    const beat = this.currentBeat;
-    if (beat?.task) this.mode.end('skip', this.ctx(dt));
-
-    this.modeId = id;
-    this.mode = GUIDANCE_MODES[id]();
-
-    if (beat?.task) {
-      this.mode.begin(beat.task, this.ctx(dt));
-    } else {
-      this.skipToNextTask();
-    }
-  }
-
-  /**
-   * Atempausen ueberspringen, bis wieder eine Aufgabe laeuft.
-   *
-   * Die uebersprungenen Pausen werden nicht einfach verworfen, sondern auf
-   * ihren Endzustand gesetzt - sonst startet man mit stehendem Flug oder halb
-   * aufgeblendetem Feld in die naechste Aufgabe.
-   */
-  skipToNextTask() {
-    let guard = 0;
-    while (!this.finished && !this.hasTask && guard++ < BEATS.length + 1) {
-      const beat = this.currentBeat;
-      if (beat) this.settleInterlude(beat);
-      this.advance(true);
-    }
-  }
 
   private advance(completedWell: boolean) {
     const prev = this.currentBeat;
@@ -192,12 +153,5 @@ export class Director {
       const k = 1 - Math.exp(-dt / (t.tau ?? 4));
       this.flight.forwardSpeed += (t.speed - this.flight.forwardSpeed) * k;
     }
-  }
-
-  /** Atempause sofort auf ihren Endzustand setzen (beim Ueberspringen). */
-  private settleInterlude(beat: Beat) {
-    const t = interludeTarget(beat);
-    if (t.density !== undefined) this.uniforms.fieldDensity.value = t.density;
-    if (t.speed !== undefined) this.flight.forwardSpeed = t.speed;
   }
 }
